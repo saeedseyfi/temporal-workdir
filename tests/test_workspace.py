@@ -106,9 +106,7 @@ class TestWorkspace:
 
         shutil.rmtree(tmpdir)
 
-    async def test_explicit_local_path(
-        self, memory_url: str, tmp_path: Path
-    ) -> None:
+    async def test_explicit_local_path(self, memory_url: str, tmp_path: Path) -> None:
         """User-specified local_path is used instead of a temp directory."""
         local = tmp_path / "my_workspace"
         async with Workspace(memory_url, local_path=local) as ws:
