@@ -4,7 +4,7 @@ Sync a local directory with remote storage before and after a Temporal activity.
 
 ## Problem
 
-Temporal activities that read/write files on local disk break when you scale to multiple worker instances — each worker has its own disk. This module solves that by syncing a remote storage location to a local temp directory before the activity runs, and pushing changes back after.
+Temporal activities that read/write files on local disk break when you scale to multiple worker instances. Each worker has its own disk. This module syncs a remote storage location to a local temp directory before the activity runs, and pushes changes back after.
 
 ## Install
 
@@ -67,7 +67,7 @@ async def register(input: RegisterInput) -> RegisterOutput:
 2. **Execute**: Your activity reads/writes files in the local directory
 3. **Push**: On clean exit, packs the directory into `tar.gz` and uploads
 
-If the archive doesn't exist yet (first run), the local directory starts empty. If the activity raises an exception, no push happens — remote state is untouched.
+If the archive doesn't exist yet (first run), the local directory starts empty. If the activity raises an exception, no push happens. Remote state is untouched.
 
 ## Storage Backends
 
