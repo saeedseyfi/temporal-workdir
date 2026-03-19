@@ -35,10 +35,9 @@ def workspace(
 
     Built-in template variables (from ``activity.info()``):
 
-    - ``{workflow_id}``
-    - ``{workflow_run_id}``
-    - ``{activity_id}``
-    - ``{activity_type}``
+    - ``{workflow_id}`` — stable across retries
+    - ``{activity_id}`` — unique per scheduling within a workflow
+    - ``{activity_type}`` — the activity name
     - ``{task_queue}``
 
     Example::
@@ -72,8 +71,7 @@ def workspace(
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
             info = temporalio.activity.info()
             template_vars: dict[str, str] = {
-                "workflow_id": info.workflow_id,
-                "workflow_run_id": info.workflow_run_id,
+                "workflow_id": info.workflow_id or "",
                 "activity_id": info.activity_id,
                 "activity_type": info.activity_type,
                 "task_queue": info.task_queue,
