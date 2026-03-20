@@ -147,6 +147,38 @@ class TestWorkspace:
             assert (ws.path / "data.bin").read_bytes() == binary_data
 
 
+class TestWorkspaceReadOnly:
+    """Tests for read_only mode."""
+
+    async def test_read_only_skips_push(self, memory_url: str) -> None:
+        """Read-only workspace pulls but does not push back."""
+        # Write initial state
+        async with Workspace(memory_url) as ws:
+            (ws.path / "data.txt").write_text("original")
+
+        # Open read-only, modify locally — should NOT push
+        async with Workspace(memory_url, read_only=True) as ws:
+            assert (ws.path / "data.txt").read_text() == "original"
+            (ws.path / "data.txt").write_text("modified")
+
+        # Original state preserved
+        async with Workspace(memory_url) as ws:
+            assert (ws.path / "data.txt").read_text() == "original"
+
+    async def test_read_only_empty_remote(self, memory_url: str) -> None:
+        """Read-only workspace works with no remote archive."""
+        async with Workspace(memory_url, read_only=True) as ws:
+            assert ws.path.exists()
+            assert list(ws.path.iterdir()) == []
+
+    async def test_read_only_cleans_up_tempdir(self, memory_url: str) -> None:
+        """Read-only workspace still cleans up temp directory."""
+        async with Workspace(memory_url, read_only=True) as ws:
+            tmpdir = ws.path
+
+        assert not tmpdir.exists()
+
+
 class TestWorkspaceExplicitPullPush:
     """Tests for using pull/push directly without context manager."""
 

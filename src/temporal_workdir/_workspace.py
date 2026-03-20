@@ -39,6 +39,9 @@ class Workspace:
             a temporary directory is created.
         cleanup: What to do with the local directory after push.
             ``"auto"`` deletes it, ``"keep"`` leaves it in place.
+        read_only: If ``True``, the workspace is pulled but never pushed
+            back to remote storage. Useful for reading shared state without
+            risking accidental overwrites.
         storage_options: Extra keyword arguments passed to
             ``fsspec.filesystem()``. Use for authentication, project IDs, etc.
     """
@@ -48,11 +51,13 @@ class Workspace:
         remote_url: str,
         local_path: Path | None = None,
         cleanup: Literal["auto", "keep"] = "auto",
+        read_only: bool = False,
         **storage_options: object,
     ) -> None:
         self._remote_url = remote_url.rstrip("/")
         self._archive_url = self._remote_url + ".tar.gz"
         self._cleanup = cleanup
+        self._read_only = read_only
         self._storage_options = storage_options
 
         parsed = urlparse(self._archive_url)
@@ -124,7 +129,7 @@ class Workspace:
         exc_tb: object,
     ) -> None:
         """Push local state on clean exit, then optionally clean up."""
-        if exc_type is None:
+        if exc_type is None and not self._read_only:
             await self.push()
         if self._cleanup == "auto" and self._owns_tempdir:
             shutil.rmtree(self._local_path, ignore_errors=True)
