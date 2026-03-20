@@ -4,15 +4,16 @@ from __future__ import annotations
 
 import contextvars
 import functools
-from collections.abc import Callable
+from collections.abc import Callable, Coroutine
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import Any, ParamSpec, TypeVar
 
 import temporalio.activity
 
 from temporal_workdir._workspace import Workspace
 
-F = TypeVar("F", bound=Callable[..., Any])
+P = ParamSpec("P")
+T = TypeVar("T")
 
 _current_workspace_path: contextvars.ContextVar[Path | None] = contextvars.ContextVar(
     "_current_workspace_path", default=None
@@ -23,7 +24,10 @@ def workspace(
     remote_url_template: str,
     key_fn: Callable[..., dict[str, str]] | None = None,
     **workspace_kwargs: Any,
-) -> Callable[[F], F]:
+) -> Callable[
+    [Callable[P, Coroutine[Any, Any, T]]],
+    Callable[P, Coroutine[Any, Any, T]],
+]:
     """Decorator that provides a :class:`Workspace` to a Temporal activity.
 
     The workspace path is available via :func:`get_workspace_path` inside
@@ -66,9 +70,11 @@ def workspace(
             :class:`Workspace` (e.g., ``cleanup="keep"``).
     """
 
-    def decorator(fn: F) -> F:
+    def decorator(
+        fn: Callable[P, Coroutine[Any, Any, T]],
+    ) -> Callable[P, Coroutine[Any, Any, T]]:
         @functools.wraps(fn)
-        async def wrapper(*args: Any, **kwargs: Any) -> Any:
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             info = temporalio.activity.info()
             template_vars: dict[str, str] = {
                 "workflow_id": info.workflow_id or "",
@@ -88,7 +94,7 @@ def workspace(
                 finally:
                     _current_workspace_path.reset(token)
 
-        return wrapper  # type: ignore[return-value]
+        return wrapper
 
     return decorator
 
