@@ -13,6 +13,39 @@ import fsspec
 from temporal_workdir._archive import pack, unpack
 
 
+def list_workspace_names(prefix_url: str, **storage_options: object) -> list[str]:
+    """List workspace names under a URL prefix.
+
+    Returns the stem of each ``.tar.gz`` archive found under the prefix.
+    For example, if ``gs://bucket/components/`` contains archives
+    ``checkout.tar.gz`` and ``payment.tar.gz``, returns ``["checkout", "payment"]``.
+
+    Args:
+        prefix_url: URL prefix to list (e.g., ``gs://bucket/components/``).
+        **storage_options: Extra arguments for ``fsspec.filesystem()``.
+
+    Returns:
+        Sorted list of workspace names. Empty list if prefix doesn't exist.
+    """
+    parsed = urlparse(prefix_url.rstrip("/") + "/")
+    protocol = parsed.scheme or "file"
+    prefix_path = parsed.netloc + parsed.path if parsed.netloc else parsed.path
+
+    fs = fsspec.filesystem(protocol, **storage_options)
+
+    try:
+        entries: list[str] = fs.ls(prefix_path, detail=False)
+    except FileNotFoundError:
+        return []
+
+    names = []
+    for entry in entries:
+        basename = entry.rsplit("/", 1)[-1]
+        if basename.endswith(".tar.gz"):
+            names.append(basename.removesuffix(".tar.gz"))
+    return sorted(names)
+
+
 class Workspace:
     """Sync a local directory with a remote storage location.
 

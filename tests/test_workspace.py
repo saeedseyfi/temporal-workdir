@@ -179,6 +179,32 @@ class TestWorkspaceReadOnly:
         assert not tmpdir.exists()
 
 
+class TestListWorkspaceNames:
+    """Tests for list_workspace_names."""
+
+    async def test_list_existing_workspaces(self, memory_url: str) -> None:
+        """List returns names of existing workspace archives."""
+        from temporal_workdir import list_workspace_names
+
+        # Create two workspaces under a common prefix
+        async with Workspace(f"{memory_url}/alpha") as ws:
+            (ws.path / "data.txt").write_text("a")
+        async with Workspace(f"{memory_url}/beta") as ws:
+            (ws.path / "data.txt").write_text("b")
+
+        names = list_workspace_names(memory_url)
+        assert names == ["alpha", "beta"]
+
+    async def test_list_empty_prefix(self) -> None:
+        """List returns empty list for non-existent prefix."""
+        import uuid
+
+        from temporal_workdir import list_workspace_names
+
+        names = list_workspace_names(f"memory://nonexistent-{uuid.uuid4()}")
+        assert names == []
+
+
 class TestWorkspaceExplicitPullPush:
     """Tests for using pull/push directly without context manager."""
 
