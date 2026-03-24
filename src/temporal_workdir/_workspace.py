@@ -13,6 +13,25 @@ import fsspec
 from temporal_workdir._archive import pack, unpack
 
 
+def _resolve_activity_template(url: str) -> str:
+    """Resolve ``{workflow_run_id}`` and other placeholders from activity context."""
+    import temporalio.activity
+
+    info = temporalio.activity.info()
+    return url.format(
+        activity_id=info.activity_id,
+        activity_run_id=info.activity_run_id or "",
+        activity_type=info.activity_type,
+        attempt=str(info.attempt),
+        namespace=info.namespace,
+        task_queue=info.task_queue,
+        workflow_id=info.workflow_id or "",
+        workflow_namespace=info.workflow_namespace or "",
+        workflow_run_id=info.workflow_run_id or "",
+        workflow_type=info.workflow_type or "",
+    )
+
+
 def list_workspace_names(prefix_url: str, **storage_options: object) -> list[str]:
     """List workspace names under a URL prefix.
 
@@ -109,6 +128,8 @@ class Workspace:
         read_only: bool = False,
         **storage_options: object,
     ) -> None:
+        if "{" in remote_url:
+            remote_url = _resolve_activity_template(remote_url)
         self._remote_url = remote_url.rstrip("/")
         self._archive_url = self._remote_url + ".tar.gz"
         self._cleanup = cleanup
