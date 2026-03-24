@@ -61,6 +61,20 @@ async def register(input: RegisterInput) -> RegisterOutput:
     ...
 ```
 
+### Listing and deleting workspaces
+
+```python
+from temporal_workdir import list_workspace_names, delete_workspace
+
+# List all workspace names under a prefix
+names = list_workspace_names("gs://my-bucket/pipeline/components")
+# → ["checkout", "payment", "shared-lib"]
+
+# Delete a workspace archive
+deleted = delete_workspace("gs://my-bucket/pipeline/components/checkout")
+# → True if existed, False if not
+```
+
 ## How It Works
 
 1. **Pull**: On entry, downloads `{remote_url}.tar.gz` and unpacks to a temp directory
