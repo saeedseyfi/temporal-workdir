@@ -40,8 +40,14 @@ def workspace(
     Built-in template variables (from ``activity.info()``):
 
     - ``{workflow_id}`` — stable across retries
+    - ``{workflow_run_id}`` — unique per workflow execution
+    - ``{workflow_type}`` — workflow class name
+    - ``{workflow_namespace}``
     - ``{activity_id}`` — unique per scheduling within a workflow
+    - ``{activity_run_id}`` — unique per activity attempt
     - ``{activity_type}`` — the activity name
+    - ``{attempt}`` — retry attempt number (starts at 1)
+    - ``{namespace}``
     - ``{task_queue}``
 
     Example::
@@ -77,10 +83,16 @@ def workspace(
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             info = temporalio.activity.info()
             template_vars: dict[str, str] = {
-                "workflow_id": info.workflow_id or "",
                 "activity_id": info.activity_id,
+                "activity_run_id": info.activity_run_id or "",
                 "activity_type": info.activity_type,
+                "attempt": str(info.attempt),
+                "namespace": info.namespace,
                 "task_queue": info.task_queue,
+                "workflow_id": info.workflow_id or "",
+                "workflow_namespace": info.workflow_namespace or "",
+                "workflow_run_id": info.workflow_run_id or "",
+                "workflow_type": info.workflow_type or "",
             }
             if key_fn is not None:
                 template_vars.update(key_fn(*args))
