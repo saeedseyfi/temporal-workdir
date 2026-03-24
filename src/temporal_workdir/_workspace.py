@@ -46,6 +46,28 @@ def list_workspace_names(prefix_url: str, **storage_options: object) -> list[str
     return sorted(names)
 
 
+def delete_workspace(remote_url: str, **storage_options: object) -> bool:
+    """Delete a workspace archive from remote storage.
+
+    Args:
+        remote_url: Remote storage URL (same format as ``Workspace``).
+        **storage_options: Extra arguments for ``fsspec.filesystem()``.
+
+    Returns:
+        True if the archive existed and was deleted, False if it didn't exist.
+    """
+    archive_url = remote_url.rstrip("/") + ".tar.gz"
+    parsed = urlparse(archive_url)
+    protocol = parsed.scheme or "file"
+    remote_path = parsed.netloc + parsed.path if parsed.netloc else parsed.path
+
+    fs = fsspec.filesystem(protocol, **storage_options)
+    if fs.exists(remote_path):
+        fs.rm(remote_path)
+        return True
+    return False
+
+
 class Workspace:
     """Sync a local directory with a remote storage location.
 

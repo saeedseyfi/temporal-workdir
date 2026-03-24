@@ -11,10 +11,11 @@ The storage backend is auto-detected from the URL scheme via `fsspec`_.
 """
 
 from temporal_workdir._temporal import get_workspace_path, workspace
-from temporal_workdir._workspace import Workspace, list_workspace_names
+from temporal_workdir._workspace import Workspace, delete_workspace, list_workspace_names
 
 __all__ = [
     "Workspace",
+    "delete_workspace",
     "get_workspace_path",
     "list_workspace_names",
     "workspace",
