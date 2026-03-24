@@ -170,6 +170,8 @@ class Workspace:
             return
 
         data = pack(self._local_path)
+        parent = self._remote_path.rsplit("/", 1)[0]
+        self._fs.makedirs(parent, exist_ok=True)
         self._fs.pipe_file(self._remote_path, data)
 
     async def __aenter__(self) -> Workspace:
