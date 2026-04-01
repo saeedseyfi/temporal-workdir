@@ -87,6 +87,17 @@ def delete_workspace(remote_url: str, **storage_options: object) -> bool:
     return False
 
 
+def _is_expected_failure(exc_type: type[BaseException] | None) -> bool:
+    """Check if exception is a Temporal ApplicationError (push workspace on these)."""
+    if exc_type is None:
+        return False
+    try:
+        from temporalio.exceptions import ApplicationError
+    except ImportError:
+        return False
+    return issubclass(exc_type, ApplicationError)
+
+
 class Workspace:
     """Sync a local directory with a remote storage location.
 
@@ -206,8 +217,10 @@ class Workspace:
         exc_val: BaseException | None,
         exc_tb: object,
     ) -> None:
-        """Push local state on clean exit, then optionally clean up."""
-        if exc_type is None and not self._read_only:
-            await self.push()
+        """Push local state on clean exit or expected failure, then optionally clean up."""
+        if not self._read_only:
+            should_push = exc_type is None or _is_expected_failure(exc_type)
+            if should_push:
+                await self.push()
         if self._cleanup == "auto" and self._owns_tempdir:
             shutil.rmtree(self._local_path, ignore_errors=True)
