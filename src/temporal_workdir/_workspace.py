@@ -10,6 +10,8 @@ from urllib.parse import urlparse
 
 import fsspec
 
+from temporalio.exceptions import ApplicationError
+
 from temporal_workdir._archive import pack, unpack
 
 
@@ -91,8 +93,6 @@ def _is_expected_failure(exc_type: type[BaseException] | None) -> bool:
     """Check if exception is a Temporal ApplicationError (push workspace on these)."""
     if exc_type is None:
         return False
-    from temporalio.exceptions import ApplicationError
-
     return issubclass(exc_type, ApplicationError)
 
 
