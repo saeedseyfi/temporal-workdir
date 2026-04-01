@@ -91,10 +91,8 @@ def _is_expected_failure(exc_type: type[BaseException] | None) -> bool:
     """Check if exception is a Temporal ApplicationError (push workspace on these)."""
     if exc_type is None:
         return False
-    try:
-        from temporalio.exceptions import ApplicationError
-    except ImportError:
-        return False
+    from temporalio.exceptions import ApplicationError
+
     return issubclass(exc_type, ApplicationError)
 
 
